@@ -37,7 +37,7 @@ describe('AASKU',function(){
 	});
 	it('should have all attrs avaiable in availableSKUs when initialized',function(){
 		var aaSKU = new AASKU(attrGroups,availableSKUs);
-		assert.deepEqual(aaSKU.availableAttrs,['red',"S","L","blue","yellow"]);
+		assert.isTrue(isTwoArrayIdentical(aaSKU.props.initialAvaiableAttrs,['red',"S","L","blue","yellow"]));
 	});
 
 	it('should extract all attributes from attributes groups and store in .allAttrs property',function(){
@@ -108,4 +108,49 @@ describe('AASKU',function(){
 		assert.isTrue(isTwoArrayIdentical(result.availableAttrs, ['red','blue','S','M','L']));
 
 	});
+
+	it('test the example of README.md Example 1: select only one attribute',function(){
+		var attrGroups = [
+			['银色', '金色', '深空灰', '玫瑰金色'],
+			['16GB', '64GB', '128GB']
+		];
+
+		var skus = [
+			['银色', '16GB'],
+			['银色', '64GB'],
+			['银色', '128GB'],
+			['金色', '64GB'],
+			['深空灰', '16GB'],
+			['玫瑰金', '16GB'],
+		];
+
+		var aaSKU = new AASKU(attrGroups, skus);
+		var result = aaSKU.selectAttr('金色');
+
+		assert.isTrue(isTwoArrayIdentical(result.availableAttrs,['银色', '金色', '深空灰', '玫瑰金', '64GB']));
+		assert.isTrue(isTwoArrayIdentical(result.selectedAttrs,['金色']));
+	});
+
+	it('test the example of README.md Example 2: select all attributes of a sku',function(){
+		var attrGroups = [
+			['银色', '金色', '深空灰', '玫瑰金色'],
+			['16GB', '64GB', '128GB']
+		];
+
+		var skus = [
+			['银色', '16GB'],
+			['银色', '64GB'],
+			['银色', '128GB'],
+			['金色', '64GB'],
+			['深空灰', '16GB'],
+			['玫瑰金', '16GB'],
+		];
+
+		var aaSKU = new AASKU(attrGroups, skus);
+		aaSKU.selectAttr('金色');
+		var result = aaSKU.selectAttr('64GB');
+		assert.isTrue(isTwoArrayIdentical(result.availableAttrs,['银色', '金色', '64GB']));
+		assert.isTrue(isTwoArrayIdentical(result.selectedAttrs,['金色','64GB']));
+	});
+
 })

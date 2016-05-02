@@ -60,35 +60,22 @@ function reAggretionArray(source) {
 }
 
 function AASKU(attrGroups, availableSKUs) {
+	var that = this;
 	this.props = {};
 	this.props.attrGroup = attrGroups;
 	this.props.availableSKUs = availableSKUs;
 	this.props.allAttrs = [];
-	var that = this;
 	attrGroups.forEach(function (group) {
 		that.props.allAttrs = that.props.allAttrs.concat(group);
 	});
-	this.availableAttrs = [];
-	availableSKUs.forEach(function (sku) {
-		that.availableAttrs = that.availableAttrs.concat(sku).unique();
+	this.props.initialAvaiableAttrs = [];
+	availableSKUs.forEach(function(group){
+		that.props.initialAvaiableAttrs = that.props.initialAvaiableAttrs.concat(group).unique();
 	});
+	this.availableAttrs = [];
 	this.selectedAttrs = [];
 }
 
-AASKU.prototype.getAllAttrs = function () {
-	var result = [];
-	this.props.attrGroup.forEach(function (group) {
-		result = result.concat(group);
-	});
-	return result;
-}
-AASKU.prototype.getAllAvailableAttrs = function () {
-	var result = [];
-	this.props.availableSKUs.forEach(function (sku) {
-		result = result.concat(sku);
-	});
-	return result.unique();
-}
 
 AASKU.prototype.selectAttr = function (attr) {
 	var that = this;
@@ -113,44 +100,37 @@ AASKU.prototype.calculate = function () {
 	var that = this;
 	var result = {};
 	result.availableAttrs = this.getAllAvailableAttrs();
-
-	var latestSelectedAttr = this.selectedAttrs.slice(-1)[0];
-
-	var reAggretedSelectedList = reAggretionArray(this.selectedAttrs);
-	reAggretedSelectedList.forEach(function (reAggretedSelectedItem) {
-
-		var latestSelectedAttr = reAggretedSelectedItem.slice(-1)[0];
-		var groupindexOfLatestSelectedAttr;
-		that.props.attrGroup.forEach(function (group, idx) {
-			if (group.indexOf(latestSelectedAttr) != -1) {
-				groupindexOfLatestSelectedAttr = idx;
-			}
-		});
+	this.selectedAttrs.forEach(function (selectedAttr) {
+		var groupindexOfLatestSelectedAttr = that.groupIndexOfAttr(selectedAttr);
+		var toDelete = [];
+		var toConcate = [];
 
 		that.props.availableSKUs.forEach(function (combine) {
 			var isContain = false;
-			if (isTwoArrayContain(combine, reAggretedSelectedItem)) {
+			if (combine.indexOf(selectedAttr) != -1) {
 				isContain = true;
 			}
-
 			if (!isContain) {
-				combine.forEach(function (combineAttr, idx) {
-					if (idx != groupindexOfLatestSelectedAttr) {
-						var indexToDelete = result.availableAttrs.indexOf(combineAttr);
-						if (indexToDelete != -1) {
-							result.availableAttrs.splice(indexToDelete, 1);
-						}
-					}
-				})
+				toDelete.push(combine);
 			} else {
-				combine.forEach(function (combineAttr) {
-					if (result.availableAttrs.indexOf(combineAttr) != -1) {
-						result.availableAttrs = result.availableAttrs.concat(combine);
-					}
-				})
+				toConcate.push(combine);
 			}
+		});
+		toDelete.forEach(function(deleteCombine){
+			deleteCombine.forEach(function(deleteAttr,idx){
+				if(idx != groupindexOfLatestSelectedAttr){
+					var indexOfDeletAttrInAvaiableAttrs = result.availableAttrs.indexOf(deleteAttr);
+					if(indexOfDeletAttrInAvaiableAttrs != -1){
+						var deletedAttr = result.availableAttrs.splice(indexOfDeletAttrInAvaiableAttrs,1);
+					}
+				}
+			});
+		});
 
-		})
+		toConcate.forEach(function(concatCombine){
+			result.availableAttrs = result.availableAttrs.concat(concatCombine);
+		});
+		result.availableAttrs.unique();
 	})
 
 	result.availableAttrs = result.availableAttrs.unique();
@@ -167,6 +147,20 @@ AASKU.prototype.groupIndexOfAttr = function (attr) {
 		}
 	});
 	return groupIndexOfAttr;
+}
+AASKU.prototype.getAllAttrs = function () {
+	var result = [];
+	this.props.attrGroup.forEach(function (group) {
+		result = result.concat(group);
+	});
+	return result;
+}
+AASKU.prototype.getAllAvailableAttrs = function () {
+	var result = [];
+	this.props.availableSKUs.forEach(function (sku) {
+		result = result.concat(sku);
+	});
+	return result.unique();
 }
 
 module.exports = AASKU;
